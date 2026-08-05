@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# hardhat
+artifacts/
+cache/
+
+# secrets — NEVER commit these
+.env
+.env.*
+!.env.example
+
+# CLI run outputs (contain addresses/tx hashes; safe-ish but noisy)
+output/
+
+# OS
+.DS_Store
