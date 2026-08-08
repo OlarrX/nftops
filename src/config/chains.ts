@@ -92,6 +92,44 @@ export const CHAIN_PRESETS: Record<string, ChainPreset> = {
     explorer: "https://sepolia.arbiscan.io",
     currency: "ETH",
   },
+  // Robinhood Chain — Ethereum L2 on the Arbitrum Orbit stack, ETH as gas.
+  // Mainnet went live 2026-07-01. Values verified against public network listings
+  // (Aug 2026); cross-check docs.robinhood.com/chain before a high-value mint.
+  "robinhood-mainnet": {
+    key: "robinhood-mainnet",
+    name: "Robinhood Chain",
+    chainId: 4663,
+    kind: "mainnet",
+    rpcUrl: "https://rpc.mainnet.chain.robinhood.com",
+    explorer: "https://robinhoodchain.blockscout.com",
+    currency: "ETH",
+  },
+  "robinhood-testnet": {
+    key: "robinhood-testnet",
+    name: "Robinhood Testnet",
+    chainId: 46630,
+    // NOTE: testnet chainId (46630) is confirmed; the exact testnet RPC host
+    // follows Robinhood's mainnet pattern but was not independently verified.
+    // Confirm at docs.robinhood.com/chain/connecting before relying on it.
+    rpcUrl: "https://rpc.testnet.chain.robinhood.com",
+    kind: "testnet",
+    explorer: "https://explorer.testnet.chain.robinhood.com",
+    currency: "ETH",
+  },
+  // Arc by Circle — Layer-1 for stablecoin finance. IMPORTANT: Arc uses USDC as
+  // its native gas token with 6 DECIMALS (not 18 like ETH chains). The tool's
+  // auto-aggressive gas math assumes 18-decimal wei, so on Arc prefer MANUAL gas
+  // and double-check the numbers. Mainnet is NOT live yet (public testnet only as
+  // of Aug 2026) — only the testnet preset is shipped until Circle launches mainnet.
+  "arc-testnet": {
+    key: "arc-testnet",
+    name: "Arc Testnet (Circle)",
+    chainId: 5042002, // 0x4cef52 — verified via Chainlist / Circle docs
+    kind: "testnet",
+    rpcUrl: "https://rpc.testnet.arc.network",
+    explorer: "https://testnet.arcscan.app",
+    currency: "USDC",
+  },
 };
 
 /** Menu-friendly list, testnets grouped after their mainnet. */

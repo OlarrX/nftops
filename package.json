@@ -13,6 +13,8 @@
     "start": "node dist/index.js",
     "nftops": "ts-node src/index.ts",
     "dev": "ts-node src/index.ts",
+    "bot": "ts-node src/bot/index.ts",
+    "bot:build": "node dist/bot/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

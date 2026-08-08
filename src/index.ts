@@ -14,9 +14,10 @@ import { select } from "@inquirer/prompts";
 import { runMintEvm } from "./flows/mintEvm";
 import { runMintSolana } from "./flows/mintSolana";
 import { runDeployEvm } from "./flows/deployEvm";
+import { runMintSniper } from "./flows/mintSniper";
 
 type MainAction = "mint" | "deploy" | "exit";
-type MintChain = "evm" | "solana";
+type MintMode = "sniper" | "evm" | "solana";
 
 async function main() {
   console.clear();
@@ -74,18 +75,21 @@ async function main() {
 }
 
 /**
- * Handle the "Mint NFT" flow — ask EVM or Solana, then dispatch.
+ * Handle the "Mint NFT" flow — ask for mode, then dispatch.
  */
 async function handleMint() {
-  const chain = await select<MintChain>({
-    message: "Which blockchain?",
+  const mode = await select<MintMode>({
+    message: "Which mode?",
     choices: [
+      { name: "⚡ SNIPER MODE (FCFS / competitive mints)", value: "sniper" },
       { name: "EVM (Ethereum, Polygon, Base, Arbitrum, ...)", value: "evm" },
       { name: "Solana", value: "solana" },
     ],
   });
 
-  if (chain === "evm") {
+  if (mode === "sniper") {
+    await runMintSniper();
+  } else if (mode === "evm") {
     await runMintEvm();
   } else {
     await runMintSolana();

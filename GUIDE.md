@@ -132,5 +132,111 @@ Ask and I'll walk you through the IPFS part step by step.
 | `Compilation failed` | Run `npm run compile` again; check your internet. |
 | `insufficient funds` | Your wallet has no gas. Use a faucet (see above). |
 | Menu doesn't appear | Run `npm run dev` while inside `C:\nftops`. |
+
+---
+
+## ⚡ SNIPER MODE — Competitive FCFS Minting
+
+When milliseconds matter and you're racing others to mint, use **Sniper Mode**. This is not the regular mint flow — this pre-builds your transaction, tests your RPCs, applies aggressive gas, and fires instantly on command or at a scheduled time.
+
+### Why Sniper Mode?
+
+In a hyped FCFS (first-come-first-serve) mint, the regular CLI is too slow. Every second you spend answering prompts is a second someone else's bot gets ahead. Sniper mode moves ALL setup to before the mint opens. When the clock hits zero, your transaction is already built — you just broadcast it.
+
+### What makes you win (in order of importance)
+
+1. **Gas**: Pay more than everyone else. Validators order transactions by tip. Underpay = lose, always.
+2. **Latency**: Fast RPC close to validators. Public RPCs are slow. Premium/private RPCs (Alchemy, QuickNode) win.
+3. **Preparation**: Everything done before mint opens. Zero setup at go-time.
+
+### How to use Sniper Mode
+
+**Step 1 — Start the CLI in sniper mode**
+
+```cmd
+cd C:\nftops
+npm run dev
 ```
-```
+
+When the menu appears, choose **"Mint an NFT"** → **"⚡ SNIPER MODE (FCFS / competitive mints)"**. It's the first option in the mode list.
+
+**Step 2 — The CLI asks you everything UP FRONT**
+
+- **Chain**: Pick your network (Ethereum, Polygon, Base, Arbitrum, Robinhood Chain, Arc testnet)
+- **Extra RPCs**: Add backup RPC endpoints (Alchemy, QuickNode, Infura). The tool pings them all and picks the fastest.
+- **Contract address**: The NFT contract you're minting from
+- **Mint function**: The exact function name, e.g. `mint(uint256)` or `publicMint(address,uint256)`. Check the contract on the block explorer.
+- **Arguments**: Values for that function (quantity, recipient, etc.)
+- **Gas strategy**:
+  - **Auto-aggressive** (recommended): tool calculates 3x or 5x current gas automatically
+  - **Manual**: you specify exact gwei (use this if you know the mint's gas meta)
+- **Private key**: Paste or read from `.env`
+- **Trigger**: "Send NOW" or "Wait for target time"
+
+If you choose "Wait for target time," give it an ISO timestamp like `2026-08-06T15:00:00` and the tool sits there armed, then fires at that exact second.
+
+**Step 3 — The tool pre-builds everything**
+
+RPC health checks run. Transaction is built with nonce, gas limit, aggressive gas price. Everything is ready. Zero network calls remain except the final broadcast.
+
+**Step 4 — FIRE**
+
+Either it sends immediately (if you chose NOW), or it waits until your target time and auto-fires. Done. Your result is saved to `output/mintSniper_....json`.
+
+### Advanced: Multiple RPCs for failover
+
+The tool lets you add multiple RPC endpoints. It pings them all, measures latency, and routes to the fastest healthy one. If your primary RPC goes down mid-mint, the next one is already tested and ready.
+
+**Getting premium RPCs** (this is what serious minters use):
+- **Alchemy**: alchemy.com (free tier: 300M compute units/month)
+- **QuickNode**: quicknode.com (free tier exists)
+- **Infura**: infura.io
+- **Chainstack**, **Ankr**, **LlamaNodes** — all have free tiers
+
+Sign up, grab your RPC URL (looks like `https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY`), and paste it when the tool asks for extra RPCs.
+
+### Gas strategy guide
+
+| Scenario | Recommended setting |
+|----------|---------------------|
+| Light hype, not many bots | **Safe** (1.5x current) |
+| Moderate hype, some competition | **Competitive** (3x, default) |
+| Extreme hype, whale wars, everyone has bots | **Max** (5x) |
+| You have inside info on exact gas needed | **Manual** (specify gwei) |
+
+**Real talk**: If you're sniping a project everyone wants and you use "Safe," you will lose. In a hot mint, dozens of bots pay 5-10x gas. The tool's "Max" setting gets you into that range. If gas spikes and you still lose, you can manually set an even higher number next time (check what the winning txs paid on the explorer).
+
+### Scheduled snipes (target time)
+
+If a mint opens at a known time (e.g., "Aug 6, 3pm UTC"), convert that to your local time in ISO format: `2026-08-06T15:00:00`. Give it to the tool. It pre-builds everything, then sits armed and fires the instant that second arrives.
+
+**Protip**: Set your target time 1-2 seconds BEFORE the announced time if you're confident the contract will accept early txs. Many contracts don't enforce the exact second, and the first tx in the first viable block wins.
+
+### What the tool does NOT do (and why)
+
+This is a **single-shot sniper**, not a sustained bot. It fires one transaction, fast and aggressive. It does NOT:
+- Retry if your tx fails (you'd need to re-run it manually)
+- Monitor the mempool and dynamically reprice (that's advanced bot territory)
+- Run on a cloud server 24/7 (it runs on your PC when you call it)
+
+For 90% of FCFS mints, a well-configured single shot is enough. For the top 1% of hype (where every millisecond and every $100 of gas matters), people run bots on dedicated servers in validator data centers. That's outside the scope of this tool.
+
+---
+
+## 🆕 Robinhood Chain & Arc — read before you use them
+
+I added presets for two newer chains you mentioned. Here's the honest status of each so you don't get surprised:
+
+**Robinhood Chain** (mainnet, chainId `4663`) — this is live (mainnet launched July 2026). It's an Ethereum Layer-2 and uses **ETH** for gas, so it behaves like Base or Arbitrum and the tool's auto-gas works normally. The testnet preset (chainId `46630`) is included too, but I could not independently confirm the exact testnet RPC address, so if the testnet ever refuses to connect, grab the current RPC from the official docs and paste it as a custom RPC at the prompt.
+
+**Arc by Circle** (testnet, chainId `5042002`) — **testnet only**; Arc's mainnet had not launched as of when this was written, so there's no mainnet preset on purpose. Arc is unusual: its gas token is **USDC with 6 decimals**, not 18-decimal ETH. Because of that, the tool will **refuse "Auto-aggressive" gas on Arc** and ask you to use **Manual** gas instead — this is deliberate, to stop it from mis-pricing your bid by a huge factor. On Arc, choose Manual and enter sensible values.
+
+For any high-value mint on either chain, double-check the live RPC URL and chainId against the official docs first. Network details do change.
+
+---
+
+## 🔧 Under the hood (for the curious)
+
+Sniper mode is already wired into the main menu — you don't need to edit any code to use it. It lives in `src/flows/mintSniper.ts`, the RPC failover logic is in `src/utils/rpcPool.ts`, and the gas math is in `src/utils/gasStrategy.ts`. If you ever want to change default behavior (like the aggression multipliers), those are the files to look at — but for normal use, just run `npm run dev` and pick Sniper Mode.
+
+---

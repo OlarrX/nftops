@@ -13,6 +13,9 @@ cache/
 .env.*
 !.env.example
 
+# bot wallet store (encrypted keys live here) — NEVER commit
+.bot/
+
 # CLI run outputs (contain addresses/tx hashes; safe-ish but noisy)
 output/
 
