@@ -384,17 +384,23 @@ export function reconText(chain: ChainRef, r: ReconResult): string {
   return lines.join("\n");
 }
 
-/** Buttons shown under a recon result. */
-export function reconButtons(chain: ChainRef, r: ReconResult): InlineButton[][] {
+/**
+ * Buttons shown under a recon result. When `restricted` is true (a recon-only
+ * guest), the snipe/watch/allowlist-proof actions are omitted — a guest can look
+ * but never set up a fire.
+ */
+export function reconButtons(chain: ChainRef, r: ReconResult, restricted = false): InlineButton[][] {
   const rows: InlineButton[][] = [];
-  if (r.hasAllowlist) {
-    rows.push([{ text: "🔐 Add allowlist proof", callback_data: "recon:proof" }]);
+  if (!restricted) {
+    if (r.hasAllowlist) {
+      rows.push([{ text: "🔐 Add allowlist proof", callback_data: "recon:proof" }]);
+    }
+    rows.push([{ text: "⚡ Set up snipe", callback_data: "snipe" }]);
+    rows.push([
+      { text: "⏰ Countdown", callback_data: "watch:countdown" },
+      { text: "📡 Watch until live", callback_data: "watch:live" },
+    ]);
   }
-  rows.push([{ text: "⚡ Set up snipe", callback_data: "snipe" }]);
-  rows.push([
-    { text: "⏰ Countdown", callback_data: "watch:countdown" },
-    { text: "📡 Watch until live", callback_data: "watch:live" },
-  ]);
   rows.push([
     { text: "🌐 Open in explorer", url: `${chain.explorer.replace(/\/+$/, "")}/address/${r.address}` },
   ]);
@@ -492,7 +498,8 @@ export async function handleReconMessage(
   tg: TelegramClient,
   session: SessionState,
   chatId: number,
-  text: string
+  text: string,
+  restricted = false
 ): Promise<boolean> {
   const pending = session.get(chatId);
   if (!pending) return false;
@@ -522,7 +529,7 @@ export async function handleReconMessage(
       target.recon = recon;
       target.allowlistProof = undefined; // fresh contract, drop any old proof
       session.setTarget(chatId, target);
-      await tg.sendMessage(chatId, reconText(target.chain, recon), reconButtons(target.chain, recon));
+      await tg.sendMessage(chatId, reconText(target.chain, recon), reconButtons(target.chain, recon, restricted));
     } catch (err) {
       await tg.sendMessage(
         chatId,

@@ -14,7 +14,7 @@ No coding needed to use it — you tap buttons in a Telegram chat. You only touc
 
 3. **The bot answers only you.** It's locked to your single Telegram account. Anyone else who messages it is silently ignored. It also only works in your private chat with the bot — never in a group.
 
-4. **Test on a testnet first.** Before you point this at a real mint with real money, run the whole thing once on a testnet (free play-money chain). The live-fire path has never been exercised end-to-end in a real environment, so you prove it works with fake funds before you trust it with real ones. This is the single most important habit.
+4. **Test on a testnet first.** Before you point this at a real mint with real money, run the whole thing once on a testnet (free play-money chain). The fire path has now been proven end-to-end on Base Sepolia — but every new contract behaves differently, so prove your exact setup with fake funds before trusting it with real ones. This is the single most important habit.
 
 ---
 
@@ -50,6 +50,7 @@ No coding needed to use it — you tap buttons in a Telegram chat. You only touc
    - 👛 Wallet
    - 🔍 Check a contract
    - ⚡ Snipe a mint
+   - 🎟️ Guest access
 
 Keep this terminal window open while you want the bot alive. Close it (Ctrl+C) to stop the bot. Everything it knows — active wallet, contract, settings — lives in memory and on disk under `.bot/` (encrypted).
 
@@ -181,6 +182,27 @@ It stops itself after **6 hours**, or after 10 checks in a row fail (bad connect
 
 ---
 
+## 🎟️ Guest access — let a friend do recon (view-only)
+
+Sometimes you want a friend to be able to look up a contract's mint info without handing them any control. This gives them **recon only**: they can check contracts, but they can **never** touch your wallet, your snipe settings, or fire a mint. That stays yours alone, always.
+
+It works like a one-time coupon:
+
+1. Tap **🎟️ Guest access → ➕ Create an invite code** (or send `/invite`). The bot shows you a long code.
+2. **Send that code to one friend** along with the two lines the bot shows: they open your bot, press Start, and send `/redeem <code>`.
+3. The **first** person to redeem it is locked in. After that the code is dead — a second person (or a second try by someone else) is refused. So a leaked code can't be reused.
+4. Your friend now sees only a **🔍 Check a contract** button. Nothing else is reachable for them.
+
+To see who has access or cut someone off: tap **🎟️ Guest access** (or send `/guests`). Each active guest has a **🚫 Revoke** button — tap it and their access dies instantly. `/revoke <code>` does the same from the keyboard.
+
+**Honest notes:**
+
+- A code only ever unlocks read-only recon of public on-chain data. Even if a stranger somehow guessed a code (the codes are long and random, so this is effectively impossible), the worst they could do is look up contracts.
+- Guests only work in their own private chat with the bot, same as you.
+- The guest list is stored under `.bot/` (git-ignored), so it survives a restart — but it's the owner-only gate in the code, not that file, that actually keeps guests out of firing.
+
+---
+
 ## Your first end-to-end run (do this on a testnet)
 
 This is the dry-run that proves everything works before real money is ever involved.
@@ -211,7 +233,7 @@ This is the dry-run that proves everything works before real money is ever invol
 
 ## The honest limitations, in one place
 
-- **Live fire and live watch have never been run end-to-end against a real chain** in this build's development environment. Treat the first testnet run as the real test. Prove it with fake money first.
+- **Live fire has been proven once, on Base Sepolia** (a real mint confirmed on-chain), and the watcher has been observed running live. That's one contract, though — treat the first run against any *new* contract as a fresh test, on a testnet, with fake money first.
 - **Watches and session state are in-memory.** A restart forgets your active watch, active contract, and settings — you keep wallets (encrypted on disk). Re-arm after restart.
 - **It runs on your PC.** No PC on and online = no bot, no watch, no fire. This is intentional — your keys never leave your machine, and nothing runs on a server you don't control.
 - **Encryption protects the stored file, not everything.** Someone with **both** your `.env` and the `.bot/` folder could decrypt. The burner-only rule is what actually caps your risk. Keep it.

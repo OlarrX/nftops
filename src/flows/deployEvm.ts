@@ -27,7 +27,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 
-type ContractChoice = "MyERC721" | "MyERC1155";
+type ContractChoice = "MyERC721" | "MyERC1155" | "TestDrop";
 
 export async function runDeployEvm(): Promise<void> {
   console.log("\n🚀 Deploy EVM Contract\n");
@@ -46,6 +46,7 @@ export async function runDeployEvm(): Promise<void> {
       choices: [
         { name: "MyERC721 (ERC-721 NFT)", value: "MyERC721" },
         { name: "MyERC1155 (ERC-1155 multi-token)", value: "MyERC1155" },
+        { name: "TestDrop (public mint — for testing the snipe bot)", value: "TestDrop" },
       ],
     });
 
@@ -100,14 +101,32 @@ async function collectConstructorArgs(contractName: ContractChoice): Promise<str
     const symbol = await promptText("Collection symbol (e.g., 'MNFT'):");
     const owner = await promptText("Initial owner address (will have minting rights):");
     return [name, symbol, owner];
-  } else {
-    // MyERC1155(string baseUri, address initialOwner)
-    const baseUri = await promptText(
-      "Base metadata URI (with {id} placeholder, e.g., 'ipfs://CID/{id}.json'):"
-    );
-    const owner = await promptText("Initial owner address (will have minting rights):");
-    return [baseUri, owner];
   }
+
+  if (contractName === "TestDrop") {
+    // TestDrop(string name, string symbol, uint256 mintPriceWei, uint256 maxSupply,
+    //          uint256 maxPerWallet, address initialOwner)
+    const name = await promptText("Collection name (e.g., 'Test Drop'):");
+    const symbol = await promptText("Collection symbol (e.g., 'TEST'):");
+    const priceEth = await promptText(
+      "Mint price in ETH per NFT (enter 0 for a free mint — easiest for a first test):"
+    );
+    const maxSupply = await promptText("Max supply (total NFTs that can ever mint, e.g. 100):");
+    const maxPerWallet = await promptText("Max per wallet (enter 0 for no limit):");
+    const owner = await promptText(
+      "Owner address (you — can flip the sale on/off and withdraw):"
+    );
+    // Convert the human ETH amount to wei so the constructor gets the raw uint.
+    const priceWei = ethers.parseEther((priceEth.trim() || "0")).toString();
+    return [name, symbol, priceWei, maxSupply.trim(), maxPerWallet.trim(), owner];
+  }
+
+  // MyERC1155(string baseUri, address initialOwner)
+  const baseUri = await promptText(
+    "Base metadata URI (with {id} placeholder, e.g., 'ipfs://CID/{id}.json'):"
+  );
+  const owner = await promptText("Initial owner address (will have minting rights):");
+  return [baseUri, owner];
 }
 
 /**

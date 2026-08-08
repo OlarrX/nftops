@@ -15,8 +15,9 @@ import { runMintEvm } from "./flows/mintEvm";
 import { runMintSolana } from "./flows/mintSolana";
 import { runDeployEvm } from "./flows/deployEvm";
 import { runMintSniper } from "./flows/mintSniper";
+import { runManageTestDrop } from "./flows/manageTestDrop";
 
-type MainAction = "mint" | "deploy" | "exit";
+type MainAction = "mint" | "deploy" | "testdrop" | "exit";
 type MintMode = "sniper" | "evm" | "solana";
 
 async function main() {
@@ -33,6 +34,7 @@ async function main() {
         choices: [
           { name: "🎨 Mint an NFT", value: "mint" },
           { name: "🚀 Deploy an EVM contract", value: "deploy" },
+          { name: "🧪 Manage Test Drop (open/close test sale)", value: "testdrop" },
           { name: "🚪 Exit", value: "exit" },
         ],
       });
@@ -46,6 +48,8 @@ async function main() {
         await handleMint();
       } else if (action === "deploy") {
         await handleDeploy();
+      } else if (action === "testdrop") {
+        await runManageTestDrop();
       }
 
       // Prompt to continue or exit
